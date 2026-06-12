@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:ital,wght@0,400..700;1,400..700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #FAFAF8;
+    color: #1A1A2E;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-accent text-white px-5 py-2.5 rounded-md font-sans font-medium hover:bg-accent/90 transition-colors;
+  }
+
+  .btn-outline {
+    @apply border border-primary text-primary px-5 py-2.5 rounded-md font-sans font-medium hover:bg-primary hover:text-white transition-colors;
+  }
+
+  .card {
+    @apply bg-surface border border-border rounded-lg p-6 shadow-sm;
+  }
+
+  .input {
+    @apply w-full bg-surface border border-border rounded-md px-3 py-2.5 text-sm text-primary focus:border-primary focus:ring-0 outline-none transition-colors;
+  }
+
+  .status-normal {
+    @apply bg-status-green/10 text-status-green border border-status-green/20 text-xs px-2 py-0.5 rounded-full font-medium;
+  }
+
+  .status-high {
+    @apply bg-status-red/10 text-status-red border border-status-red/20 text-xs px-2 py-0.5 rounded-full font-medium;
+  }
+
+  .status-low {
+    @apply bg-status-amber/10 text-status-amber border border-status-amber/20 text-xs px-2 py-0.5 rounded-full font-medium;
+  }
+
+  .status-watch {
+    @apply bg-surface-low text-muted border border-border text-xs px-2 py-0.5 rounded-full font-medium;
+  }
+}
