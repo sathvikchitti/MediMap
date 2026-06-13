@@ -128,6 +128,7 @@ export interface ReportExtractionResult {
   test_date?: string
   overall_status: 'Normal' | 'Borderline' | 'Abnormal'
   abnormal_count: number
+  ai_summary?: string
   next_test_suggestion?: {
     test_name: string
     days_from_now: number

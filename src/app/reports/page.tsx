@@ -125,7 +125,7 @@ export default async function ReportsPage() {
   })
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-transparent">
       <Sidebar userName={profile?.full_name || undefined} />
       <main className="ml-60 flex-1 p-8">
         <div className="flex items-center justify-between mb-8">

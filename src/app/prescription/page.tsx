@@ -12,6 +12,15 @@ const EMPTY_MEDICINE: ParsedMedicine = {
   notes: '',
 }
 
+function generateMedicineLinks(medicineName: string) {
+  const encoded = encodeURIComponent(medicineName)
+  return {
+    tata1mg: `https://www.1mg.com/search/all?name=${encoded}`,
+    pharmeasy: `https://pharmeasy.in/search/all?name=${encoded}`,
+    apollo: `https://www.apollopharmacy.in/search-medicines/${encoded}`,
+  }
+}
+
 export default function PrescriptionPage() {
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState('')
@@ -142,7 +151,7 @@ export default function PrescriptionPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-transparent">
       <Sidebar />
       <main className="ml-60 flex-1 p-8">
         <h1 className="font-playfair text-3xl font-bold text-primary mb-2">Prescription Scanner</h1>
@@ -229,8 +238,11 @@ export default function PrescriptionPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {medicines.map((medicine, index) => (
-                        <tr key={index} className="border-b border-border last:border-0">
+                      {medicines.map((medicine, index) => {
+                        const links = generateMedicineLinks(medicine.medicine_name)
+                        return (
+                        <>
+                        <tr key={index} className="border-b border-border">
                           <td className="py-2 pr-4">
                             <input
                               className="w-full border border-border rounded px-2 py-1 text-xs text-primary focus:border-accent outline-none"
@@ -265,7 +277,41 @@ export default function PrescriptionPage() {
                             </button>
                           </td>
                         </tr>
-                      ))}
+                        {medicine.medicine_name.trim() && (
+                          <tr className="border-b border-border last:border-0">
+                            <td colSpan={5} className="pb-3">
+                              <div className="flex flex-wrap gap-2">
+                                <a
+                                  href={links.tata1mg}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs border border-accent text-accent px-3 py-1.5 rounded-md hover:bg-accent hover:text-white transition-colors"
+                                >
+                                  Buy on 1mg
+                                </a>
+                                <a
+                                  href={links.pharmeasy}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs border border-accent text-accent px-3 py-1.5 rounded-md hover:bg-accent hover:text-white transition-colors"
+                                >
+                                  Buy on PharmEasy
+                                </a>
+                                <a
+                                  href={links.apollo}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs border border-accent text-accent px-3 py-1.5 rounded-md hover:bg-accent hover:text-white transition-colors"
+                                >
+                                  Buy on Apollo
+                                </a>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                        </>
+                        )
+                      })}
 
                       {addingRow && (
                         <tr className="border-b border-border bg-surface-low">

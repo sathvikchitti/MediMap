@@ -102,7 +102,7 @@ export default function UploadPage() {
     s === 'Normal' ? 'status-normal' : s === 'High' || s === 'Critical High' ? 'status-high' : 'status-low'
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-transparent">
       <Sidebar />
       <main className="ml-60 flex-1 p-8">
         <h1 className="font-playfair text-3xl font-bold text-primary mb-2">Upload Report</h1>

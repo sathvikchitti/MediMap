@@ -102,6 +102,30 @@ export function buildParameterTrends(
   return trends
 }
 
+export function buildAllParameterTrends(
+  values: Array<Pick<ReportValue, 'parameter_name' | 'value' | 'unit' | 'test_date'>>,
+): Record<string, TrendPoint[]> {
+  const trends: Record<string, TrendPoint[]> = {}
+
+  for (const row of values) {
+    if (row.value == null || !row.test_date) continue
+    const name = (row.parameter_name || '').trim()
+    if (!name) continue
+    if (!trends[name]) trends[name] = []
+    trends[name].push({
+      date: row.test_date,
+      value: row.value,
+      unit: row.unit || '',
+    })
+  }
+
+  for (const key of Object.keys(trends)) {
+    trends[key].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  }
+
+  return trends
+}
+
 export function filterByTimeframe(points: TrendPoint[], range: TimeRange) {
   const months = range === '3M' ? 3 : range === '6M' ? 6 : 12
   const cutoff = new Date()

@@ -37,7 +37,7 @@ export default async function DashboardPage() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-transparent">
       <Sidebar userName={profile?.full_name || undefined} />
       <main className="ml-60 flex-1 p-8">
         <div className="mb-8">

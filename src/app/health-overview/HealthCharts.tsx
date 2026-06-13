@@ -23,7 +23,7 @@ function formatValue(parameter: string, value: number) {
 }
 
 function LineChart({ data }: { data: { value: number; label: string }[] }) {
-  if (data.length < 2) return null
+  if (data.length === 0) return null
 
   const W = 500
   const H = 140
@@ -35,13 +35,15 @@ function LineChart({ data }: { data: { value: number; label: string }[] }) {
   const values = data.map(d => d.value)
   const minV = Math.min(...values)
   const maxV = Math.max(...values)
-  const valueRange = maxV - minV || 1
-  // Add 10% breathing room top and bottom
+  const valueRange = maxV - minV || Math.abs(maxV) || 1
+  // Add 15% breathing room top and bottom
   const yMin = minV - valueRange * 0.15
   const yMax = maxV + valueRange * 0.15
-  const yRange = yMax - yMin
+  const yRange = yMax - yMin || 1
 
-  const toX = (i: number) => PAD_LEFT + (i / (data.length - 1)) * (W - PAD_LEFT - PAD_RIGHT)
+  const toX = (i: number) => data.length === 1
+    ? W / 2
+    : PAD_LEFT + (i / (data.length - 1)) * (W - PAD_LEFT - PAD_RIGHT)
   const toY = (v: number) => PAD_TOP + (1 - (v - yMin) / yRange) * (H - PAD_TOP - PAD_BOT)
 
   const pts = data.map((d, i) => ({ x: toX(i), y: toY(d.value), ...d }))
@@ -103,12 +105,12 @@ function TrendCard({
 }) {
   const filtered = filterByTimeframe(points, range)
 
-  if (filtered.length < 2) {
+  if (filtered.length === 0) {
     return (
       <div className="card">
         <h3 className="text-sm font-medium text-muted mb-1">{parameter}</h3>
         <div className="flex items-center justify-center h-32 text-center text-muted text-sm px-4">
-          Upload at least 2 reports with {parameter} to see trends.
+          No data for {parameter} in this time range.
         </div>
       </div>
     )
@@ -151,10 +153,16 @@ function TrendCard({
 
 export default function HealthCharts({
   parameterTrends,
+  allParameterTrends,
 }: {
   parameterTrends: Record<string, TrendPoint[]>
+  allParameterTrends?: Record<string, TrendPoint[]>
 }) {
   const [range, setRange] = useState<TimeRange>('1Y')
+  const [showAll, setShowAll] = useState(false)
+
+  const trackedKeys = new Set(TRACKED_PARAMETERS.map(p => p.key))
+  const extraParams = Object.keys(allParameterTrends || {}).filter(k => !trackedKeys.has(k as never))
 
   return (
     <>
@@ -184,11 +192,26 @@ export default function HealthCharts({
             range={range}
           />
         ))}
+
+        {showAll && extraParams.map(key => (
+          <TrendCard
+            key={key}
+            parameter={key}
+            points={(allParameterTrends || {})[key] || []}
+            range={range}
+          />
+        ))}
       </div>
 
-      <a href="/reports" className="inline-flex items-center text-sm text-accent font-medium hover:underline">
-        View All Parameters →
-      </a>
+      {extraParams.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowAll(prev => !prev)}
+          className="inline-flex items-center text-sm text-accent font-medium hover:underline"
+        >
+          {showAll ? 'Show Fewer Parameters' : `View All Parameters (${extraParams.length} more)`}
+        </button>
+      )}
     </>
   )
 }

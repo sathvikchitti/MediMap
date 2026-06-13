@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
         abnormal_count: extraction.abnormal_count,
         total_parameters: extraction.values?.length || 0,
         overall_status: extraction.overall_status,
-        ai_summary: null,
+        ai_summary: extraction.ai_summary || null,
         next_test_date: nextTestDate,
         next_test_name: extraction.next_test_suggestion?.test_name || null,
       })

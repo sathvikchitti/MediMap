@@ -1,7 +1,9 @@
 import OpenAI from 'openai'
-// pdf-parse exports a default function, NOT a class
+// pdf-parse v2 relies on pdfjs-dist's worker setup, which breaks under Next.js
+// server bundling ("Cannot find module './pdf.worker.mjs'"). We use the
+// pdfjs-dist legacy build directly with the worker disabled instead.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const pdfParse = require('pdf-parse') as (buffer: Buffer, options?: Record<string, unknown>) => Promise<{ text: string; numpages: number }>
+const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js')
 // tesseract.js removed — causes worker thread crash on Windows/Next.js 14
 // Images are handled via Groq vision API instead
 import type {
@@ -455,16 +457,32 @@ function formatAnalysisForStorage(analysis: HealthAnalysisResult) {
 
 async function extractTextWithPdfParse(fileBuffer: ArrayBuffer) {
   try {
-    const buffer = Buffer.from(fileBuffer)
-    const parsed = await pdfParse(buffer)
-    const textLength = parsed.text?.length || 0
-    console.log('[pdf-parse] pages:', parsed.numpages, 'text length:', textLength)
+    const data = new Uint8Array(fileBuffer)
+    const doc = await pdfjsLib.getDocument({
+      data,
+      disableWorker: true,
+      isEvalSupported: false,
+      useSystemFonts: true,
+    }).promise
+
+    let text = ''
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i)
+      const content = await page.getTextContent()
+      const pageText = content.items
+        .map((item: unknown) => (item as { str?: string }).str || '')
+        .join(' ')
+      text += pageText + '\n'
+    }
+
+    const textLength = text.length
+    console.log('[pdf-parse] pages:', doc.numPages, 'text length:', textLength)
     if (textLength > 0) {
-      console.log('[pdf-parse] text preview:', parsed.text.slice(0, 400))
+      console.log('[pdf-parse] text preview:', text.slice(0, 400))
     } else {
       console.warn('[pdf-parse] no text extracted — PDF may be scanned or image-based')
     }
-    return normalizeText(parsed.text || '')
+    return normalizeText(text)
   } catch (error) {
     console.error('[pdf-parse] error:', error)
     return ''
@@ -650,11 +668,36 @@ export async function extractReportData(
   const reportType = inferReportType(values, fallbackReportType)
   const nextTestSuggestion = inferNextTestSuggestion(reportType, values)
 
+  // Generate plain-language AI verdict inline so it's available on first upload,
+  // no manual "Regenerate Analysis" step required.
+  let aiSummary: string | undefined
+  if (values.length > 0 && process.env.GROQ_API_KEY) {
+    try {
+      const analysis = await generateReportAnalysis({
+        reportType,
+        parameters: values.map(v => ({
+          parameter_name: v.parameter_name,
+          value: v.value ?? null,
+          value_text: v.value_text ?? null,
+          unit: v.unit ?? null,
+          ref_range_low: v.ref_range_low ?? null,
+          ref_range_high: v.ref_range_high ?? null,
+          ref_range_text: v.ref_range_text ?? null,
+          status: v.status,
+        })),
+      })
+      aiSummary = formatAnalysisForStorage(analysis)
+    } catch (err) {
+      console.warn('[extraction] ai_summary generation failed — continuing without it:', err)
+    }
+  }
+
   return {
     report_type: reportType,
     values,
     overall_status: overallStatus,
     abnormal_count: abnormalCount,
+    ai_summary: aiSummary,
     next_test_suggestion: nextTestSuggestion,
   }
 }

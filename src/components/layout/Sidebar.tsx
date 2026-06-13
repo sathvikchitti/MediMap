@@ -25,7 +25,7 @@ export default function Sidebar({ userName }: { userName?: string }) {
   }
 
   return (
-    <aside className="w-60 min-h-screen bg-surface border-r border-border flex flex-col fixed left-0 top-0">
+    <aside className="w-60 min-h-screen bg-white/60 backdrop-blur-md border-r border-white/40 flex flex-col fixed left-0 top-0">
       <div className="p-6 border-b border-border">
         <span className="font-playfair text-xl font-bold text-primary">MediMap</span>
       </div>

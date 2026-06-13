@@ -86,7 +86,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-transparent flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <span className="font-playfair text-2xl font-bold text-primary">MediMap</span>

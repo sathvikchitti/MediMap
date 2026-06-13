@@ -5,6 +5,15 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 const SCAN_ERROR =
   'Unable to read prescription. Please upload a clearer image.'
 
+function generateMedicineLinks(medicineName: string) {
+  const encoded = encodeURIComponent(medicineName)
+  return {
+    tata1mg: `https://www.1mg.com/search/all?name=${encoded}`,
+    pharmeasy: `https://pharmeasy.in/search/all?name=${encoded}`,
+    apollo: `https://www.apollopharmacy.in/search-medicines/${encoded}`,
+  }
+}
+
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
 })
@@ -131,10 +140,15 @@ Rules:
     try {
       const parsed = JSON.parse(cleaned)
 
+      const medicines = (parsed.medicines ?? []).map((m: any) => ({
+        ...m,
+        links: generateMedicineLinks(m.medicine_name ?? ''),
+      }))
+
       return NextResponse.json({
         success: true,
         text: parsed.text ?? '',
-        medicines: parsed.medicines ?? [],
+        medicines,
       })
     } catch (jsonError) {
       console.error(

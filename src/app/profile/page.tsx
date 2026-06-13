@@ -21,7 +21,7 @@ export default async function ProfilePage() {
     : null
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-transparent">
       <Sidebar userName={profile?.full_name || undefined} />
       <main className="ml-60 flex-1 p-8">
         <h1 className="font-playfair text-3xl font-bold text-primary mb-2">My Profile</h1>
