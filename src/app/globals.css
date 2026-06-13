@@ -26,7 +26,7 @@
   }
 
   .card {
-    @apply bg-surface border border-border rounded-lg p-6 shadow-sm;
+    @apply bg-surface border border-border rounded-lg p-6;
   }
 
   .input {
@@ -43,9 +43,5 @@
 
   .status-low {
     @apply bg-status-amber/10 text-status-amber border border-status-amber/20 text-xs px-2 py-0.5 rounded-full font-medium;
-  }
-
-  .status-watch {
-    @apply bg-surface-low text-muted border border-border text-xs px-2 py-0.5 rounded-full font-medium;
   }
 }

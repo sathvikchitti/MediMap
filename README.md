@@ -171,3 +171,9 @@
 
 
 
+python -m venv venv
+
+.\venv\Scripts\Activate.ps1
+
+python scripts\scan_prescription.py path\to\prescription.jpg
+

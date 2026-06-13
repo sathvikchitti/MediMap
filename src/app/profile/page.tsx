@@ -23,7 +23,7 @@ export default async function ProfilePage() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar userName={profile?.full_name || undefined} />
-      <main className="ml-64 flex-1 p-8">
+      <main className="ml-60 flex-1 p-8">
         <h1 className="font-playfair text-3xl font-bold text-primary mb-2">My Profile</h1>
         <p className="text-muted text-sm mb-8">Manage your personal and health information.</p>
 
@@ -31,8 +31,8 @@ export default async function ProfilePage() {
           {/* Left: avatar + stats */}
           <div className="space-y-4">
             <div className="card text-center">
-              <div className="w-24 h-24 rounded-xl bg-primary flex items-center justify-center text-white font-playfair text-3xl font-bold mx-auto mb-4">
-                {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'}
+              <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-white font-playfair text-2xl mx-auto mb-4">
+                {profile?.full_name?.charAt(0).toUpperCase() || '?'}
               </div>
               <h2 className="font-playfair text-xl font-bold text-primary">{profile?.full_name || 'Your Name'}</h2>
               <p className="text-xs text-muted mt-1">Member since {new Date(profile?.created_at || '').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
@@ -46,7 +46,7 @@ export default async function ProfilePage() {
                 <div className="border-t border-border mt-4 pt-4">
                   <div className="flex flex-wrap gap-2 justify-center">
                     {conditions.map(c => (
-                      <span key={c.id} className="bg-primary text-white rounded-md px-3 py-1 text-sm">{c.condition_name}</span>
+                      <span key={c.id} className="bg-primary text-white text-xs px-3 py-1 rounded-full">{c.condition_name}</span>
                     ))}
                   </div>
                 </div>
@@ -54,8 +54,8 @@ export default async function ProfilePage() {
             </div>
 
             <div className="card bg-status-red/5 border-status-red/30">
-              <p className="flex items-center gap-2 text-sm font-bold text-status-red mb-2"><span>⚠</span> DANGER ZONE</p>
-              <p className="text-status-red text-xs mb-3">Permanently delete your account and all associated health data. This action cannot be undone.</p>
+              <p className="text-sm font-medium text-status-red mb-2">Danger Zone</p>
+              <p className="text-xs text-muted mb-3">This will permanently delete all your reports and data.</p>
               <button className="text-sm border border-status-red text-status-red px-3 py-1.5 rounded-md hover:bg-status-red hover:text-white transition-colors w-full">
                 Delete Account
               </button>

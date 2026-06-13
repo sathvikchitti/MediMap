@@ -1,10 +1,9 @@
 import OpenAI from 'openai'
-const { PDFParse } = require('pdf-parse') as {
-  PDFParse: new (options: { data: Buffer; verbosity?: unknown }) => {
-    getText: (options?: { partial?: number[]; first?: number; last?: number; pageJoiner?: string }) => Promise<{ text: string }>
-  }
-}
-const { createWorker } = require('tesseract.js') as { createWorker: (language: string) => Promise<{ recognize: (input: Buffer) => Promise<{ data: { text: string } }>; terminate: () => Promise<void> }> }
+// pdf-parse exports a default function, NOT a class
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const pdfParse = require('pdf-parse') as (buffer: Buffer, options?: Record<string, unknown>) => Promise<{ text: string; numpages: number }>
+// tesseract.js removed — causes worker thread crash on Windows/Next.js 14
+// Images are handled via Groq vision API instead
 import type {
   ExtractedValue,
   HealthAnalysisResult,
@@ -456,12 +455,12 @@ function formatAnalysisForStorage(analysis: HealthAnalysisResult) {
 
 async function extractTextWithPdfParse(fileBuffer: ArrayBuffer) {
   try {
-    const parser = new PDFParse({ data: Buffer.from(fileBuffer) })
-    const parsed = await parser.getText()
+    const buffer = Buffer.from(fileBuffer)
+    const parsed = await pdfParse(buffer)
     const textLength = parsed.text?.length || 0
-    console.log('[pdf-parse] text length:', textLength)
+    console.log('[pdf-parse] pages:', parsed.numpages, 'text length:', textLength)
     if (textLength > 0) {
-      console.log('[pdf-parse] text preview:', parsed.text!.slice(0, 400))
+      console.log('[pdf-parse] text preview:', parsed.text.slice(0, 400))
     } else {
       console.warn('[pdf-parse] no text extracted — PDF may be scanned or image-based')
     }
@@ -473,21 +472,74 @@ async function extractTextWithPdfParse(fileBuffer: ArrayBuffer) {
 }
 
 async function extractTextWithTesseract(fileBuffer: ArrayBuffer) {
-  const worker = await createWorker('eng')
+  // Tesseract removed — use Groq vision for images instead
+  return ''
+}
+
+async function extractValuesFromImageWithGroq(fileBuffer: ArrayBuffer, mimeType: 'image/jpeg' | 'image/png', reportType: string): Promise<ExtractedValue[]> {
+  if (!process.env.GROQ_API_KEY) return []
 
   try {
-    const { data } = await worker.recognize(Buffer.from(fileBuffer))
-    const textLength = data.text?.length || 0
-    console.log('[tesseract] text length:', textLength)
-    if (textLength > 0) {
-      console.log('[tesseract] text preview:', data.text.slice(0, 400))
+    const base64 = Buffer.from(fileBuffer).toString('base64')
+    const dataUrl = `data:${mimeType};base64,${base64}`
+
+    const response = await client.chat.completions.create({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      temperature: 0.1,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: `You are a medical report parser. Extract ALL test parameters from this lab report image.
+
+Report type hint: ${reportType || 'unknown'}
+
+Return JSON ONLY in this exact shape:
+{
+  "values": [
+    {
+      "parameter_name": "exact parameter name",
+      "method": null,
+      "value": numeric value or null,
+      "value_text": "text value if not numeric or null",
+      "unit": "unit string",
+      "ref_range_low": numeric lower bound or null,
+      "ref_range_high": numeric upper bound or null,
+      "ref_range_text": "raw reference range text",
+      "status": "Normal | High | Low | Critical High | Critical Low | Watch"
     }
-    return normalizeText(data.text || '')
+  ],
+  "lab_name": "lab name or null",
+  "test_date": "YYYY-MM-DD or null"
+}
+
+Rules:
+- Extract EVERY parameter visible
+- Determine status by comparing value to the reference range shown
+- Return ONLY valid JSON, no markdown`,
+            },
+            {
+              type: 'image_url',
+              image_url: { url: dataUrl },
+            },
+          ],
+        },
+      ],
+    })
+
+    const content = response.choices[0]?.message?.content ?? ''
+    const parsed = safeParseJson<{ values?: ExtractedValue[] }>(content, {})
+    if (!Array.isArray(parsed.values)) {
+      console.warn('[groq-vision] response missing values array')
+      return []
+    }
+    console.log('[groq-vision] extracted', parsed.values.length, 'parameters')
+    return parsed.values.filter(v => v.parameter_name?.trim())
   } catch (error) {
-    console.error('[tesseract] error:', error)
-    return ''
-  } finally {
-    await worker.terminate()
+    console.error('[groq-vision] error:', error)
+    return []
   }
 }
 
@@ -564,31 +616,29 @@ export async function extractReportData(
   fallbackReportType?: string
 ): Promise<ReportExtractionResult> {
   let extractedText = ''
+  let values: ExtractedValue[] = []
 
   if (mimeType === 'application/pdf') {
     extractedText = await extractTextWithPdfParse(fileBuffer)
-    if (extractedText.length < 50) {
-      console.warn('[extraction] PDF text too short (', extractedText.length, 'chars) — trying OCR fallback')
-      const ocrText = await extractTextWithTesseract(fileBuffer)
-      if (ocrText.length > extractedText.length) {
-        extractedText = ocrText
-      }
+    console.log('[extraction] PDF text length:', extractedText.length)
+
+    // Try regex parse first, fall back to LLM if regex gets nothing
+    values = parseExtractedTextToValues(extractedText, fallbackReportType || '')
+    if (values.length === 0 && extractedText.length >= 20) {
+      console.log('[extraction] regex got 0 — sending to LLM')
+      values = await extractValuesWithLLM(extractedText, fallbackReportType || '')
     }
   } else {
-    extractedText = await extractTextWithTesseract(fileBuffer)
+    // Images: skip tesseract entirely, go straight to Groq vision
+    console.log('[extraction] image upload — using Groq vision')
+    values = await extractValuesFromImageWithGroq(
+      fileBuffer,
+      mimeType as 'image/jpeg' | 'image/png',
+      fallbackReportType || ''
+    )
   }
 
-  console.log('[extraction] final text length:', extractedText.length)
-
-  let values = parseExtractedTextToValues(extractedText, fallbackReportType || '')
-  if (values.length === 0 && extractedText.length >= 50) {
-    console.log('[extraction] regex found 0 values — falling back to LLM')
-    values = await extractValuesWithLLM(extractedText, fallbackReportType || '')
-  } else if (values.length === 0) {
-    console.warn('[extraction] no values extracted; text length:', extractedText.length)
-  } else {
-    console.log('[extraction] regex extracted', values.length, 'parameters')
-  }
+  console.log('[extraction] final value count:', values.length)
 
   const abnormalCount = values.filter(value => value.status !== 'Normal').length
   const overallStatus = abnormalCount > 0

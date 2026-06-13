@@ -1,7 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { CloudUpload } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
 
 export default async function DashboardPage() {
@@ -40,10 +39,10 @@ export default async function DashboardPage() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar userName={profile?.full_name || undefined} />
-      <main className="ml-64 flex-1 p-8">
+      <main className="ml-60 flex-1 p-8">
         <div className="mb-8">
-          <h1 className="font-playfair text-4xl font-bold text-primary">{greeting}, {firstName}.</h1>
-          <p className="text-muted text-sm mt-1">Here's your health summary for today.</p>
+          <h1 className="font-playfair text-3xl font-bold text-primary">{greeting}, {firstName}.</h1>
+          <p className="text-muted text-sm mt-1">Here's your health summary.</p>
         </div>
 
         {/* Stat cards */}
@@ -51,16 +50,12 @@ export default async function DashboardPage() {
           {[
             { label: 'Reports Uploaded', value: reports?.length || 0, sub: latestReport ? `Last upload ${new Date(latestReport.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : 'No reports yet' },
             { label: 'Abnormal Values', value: latestReport?.abnormal_count || 0, sub: 'From latest report', valueClass: latestReport?.abnormal_count ? 'text-status-red' : 'text-primary' },
-            { label: 'Next Test Due', value: latestReport?.next_test_name || '—', sub: latestReport?.next_test_date ? `Due ${new Date(latestReport.next_test_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : 'No upcoming tests', valueClass: 'font-playfair text-2xl font-bold text-accent' },
-            { label: 'Health Score', value: profile?.health_score != null ? `${profile.health_score}/100` : '—', sub: 'Moderate — improving' },
+            { label: 'Next Test Due', value: latestReport?.next_test_name || '—', sub: latestReport?.next_test_date ? `Due ${new Date(latestReport.next_test_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : 'No upcoming tests', valueClass: 'text-accent font-playfair text-xl' },
+            { label: 'Reports This Year', value: reports?.filter(r => new Date(r.created_at).getFullYear() === new Date().getFullYear()).length || 0, sub: 'Total uploads' },
           ].map(card => (
             <div key={card.label} className="card">
               <p className="text-xs font-medium text-muted uppercase tracking-wide mb-2">{card.label}</p>
-              <p className={
-                card.valueClass?.includes('font-playfair')
-                  ? card.valueClass
-                  : `font-playfair text-3xl font-bold text-primary ${card.valueClass || ''}`
-              }>{card.value}</p>
+              <p className={`font-playfair text-3xl font-bold text-primary ${card.valueClass || ''}`}>{card.value}</p>
               <p className="text-xs text-muted mt-1">{card.sub}</p>
             </div>
           ))}
@@ -94,10 +89,9 @@ export default async function DashboardPage() {
                       <span className="text-sm text-primary">{v.parameter_name}</span>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">{v.value} {v.unit}</span>
-                        {v.status === 'Normal'
-                          ? <span className="text-status-green text-base">✓</span>
-                          : <span className="text-status-amber text-base">⚠</span>
-                        }
+                        <span className={v.status === 'Normal' ? 'status-normal' : v.status === 'High' || v.status === 'Critical High' ? 'status-high' : 'status-low'}>
+                          {v.status}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -106,7 +100,7 @@ export default async function DashboardPage() {
             ) : (
               <div className="text-center py-8">
                 <p className="text-muted text-sm mb-4">No reports uploaded yet.</p>
-                <Link href="/upload" className="btn-primary text-sm">Upload Your First Report</Link>
+                <Link href="/reports" className="btn-primary text-sm">Upload Your First Report</Link>
               </div>
             )}
           </div>
@@ -126,6 +120,9 @@ export default async function DashboardPage() {
                       <p className="text-sm font-medium text-primary">{test.test_name}</p>
                       <p className="text-xs text-muted">{test.next_due_date ? new Date(test.next_due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No date set'}</p>
                     </div>
+                    <span className={`ml-auto text-xs px-2 py-0.5 rounded-full shrink-0 ${test.status === 'Due Soon' ? 'status-low' : test.status === 'Missing' || test.status === 'Overdue' ? 'status-high' : 'status-normal'}`}>
+                      {test.status}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -136,8 +133,8 @@ export default async function DashboardPage() {
         </div>
 
         {/* Quick upload */}
-        <Link href="/upload" className="card border-dashed flex flex-col items-center justify-center py-10 hover:border-accent hover:bg-accent/5 transition-colors group block">
-          <CloudUpload size={32} className="text-accent mb-3" />
+        <Link href="/reports" className="card border-dashed flex flex-col items-center justify-center py-10 hover:border-accent hover:bg-accent/5 transition-colors group block">
+          <span className="text-3xl text-accent mb-3">↑</span>
           <p className="font-playfair font-semibold text-primary">Upload a new report</p>
           <p className="text-sm text-muted mt-1">PDF, JPG, or PNG — AI extracts the values automatically</p>
         </Link>

@@ -97,6 +97,19 @@ create table public.recommended_tests (
 );
 
 -- ============================================
+-- PRESCRIPTION MEDICINES
+-- ============================================
+create table public.prescription_medicines (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade,
+  medicine_name text not null,
+  strength text,
+  frequency text,
+  notes text,
+  created_at timestamptz default now()
+);
+
+-- ============================================
 -- STORAGE BUCKET (run separately)
 -- ============================================
 -- Create a bucket called 'reports' in Supabase Storage UI
@@ -111,6 +124,7 @@ alter table public.user_conditions enable row level security;
 alter table public.reports enable row level security;
 alter table public.report_values enable row level security;
 alter table public.recommended_tests enable row level security;
+alter table public.prescription_medicines enable row level security;
 
 -- Profiles: users can only see/edit their own
 create policy "Users can view own profile" on public.profiles
@@ -134,6 +148,10 @@ create policy "Users manage own report values" on public.report_values
 
 -- Recommended tests
 create policy "Users manage own recommended tests" on public.recommended_tests
+  for all using (auth.uid() = user_id);
+
+-- Prescription medicines
+create policy "Users manage own prescription medicines" on public.prescription_medicines
   for all using (auth.uid() = user_id);
 
 -- ============================================

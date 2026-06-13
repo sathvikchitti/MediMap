@@ -60,6 +60,16 @@ export interface ReportValue {
   updated_at: string
 }
 
+export interface PrescriptionMedicine {
+  id: string
+  user_id: string
+  medicine_name: string
+  strength: string | null
+  frequency: string | null
+  notes: string | null
+  created_at: string
+}
+
 export interface RecommendedTest {
   id: string
   user_id: string
