@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useDropzone } from 'react-dropzone'
 import Sidebar from '@/components/layout/Sidebar'
@@ -8,7 +8,7 @@ import type { ExtractedValue } from '@/types'
 
 const REPORT_TYPES = ['Blood Test', 'Thyroid', 'Lipid Profile', 'Diabetes', 'Urine', 'Liver Function', 'Kidney Function', 'CBC', 'HbA1c', 'TSH', 'Other']
 
-export default function UploadPage() {
+function UploadPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const prefillTest = searchParams.get('test') || ''
@@ -247,5 +247,13 @@ export default function UploadPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function UploadPage() {
+  return (
+    <Suspense fallback={null}>
+      <UploadPageContent />
+    </Suspense>
   )
 }

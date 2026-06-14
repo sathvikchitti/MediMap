@@ -50,7 +50,7 @@ export default async function TestHistoryPage({ params }: PageProps) {
         .order('created_at')
     : { data: [] }
 
-  const valuesByReport: Record<string, typeof allValues> = {}
+  const valuesByReport: Record<string, any[]> = {}
   for (const v of (allValues || [])) {
     if (!valuesByReport[v.report_id]) valuesByReport[v.report_id] = []
     valuesByReport[v.report_id]!.push(v)

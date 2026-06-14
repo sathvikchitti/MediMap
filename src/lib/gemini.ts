@@ -1,5 +1,5 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
-import type { GeminiExtractionResult } from '@/types'
+import { GoogleGenerativeAI } from '@google/genai'
+import type { ReportExtractionResult } from '@/types'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
@@ -44,7 +44,7 @@ Rules:
 export async function extractReportWithGemini(
   fileBuffer: ArrayBuffer,
   mimeType: 'application/pdf' | 'image/jpeg' | 'image/png'
-): Promise<GeminiExtractionResult> {
+): Promise<ReportExtractionResult> {
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
   const base64Data = Buffer.from(fileBuffer).toString('base64')
@@ -71,7 +71,7 @@ export async function extractReportWithGemini(
 
   let originalError: Error
   try {
-    return JSON.parse(cleaned) as GeminiExtractionResult
+    return JSON.parse(cleaned) as ReportExtractionResult
   } catch (e) {
     originalError = e as Error
   }
@@ -81,7 +81,7 @@ export async function extractReportWithGemini(
   const last = cleaned.lastIndexOf('}')
   if (first !== -1 && last > first) {
     try {
-      return JSON.parse(cleaned.slice(first, last + 1)) as GeminiExtractionResult
+      return JSON.parse(cleaned.slice(first, last + 1)) as ReportExtractionResult
     } catch {
       // fall through to throw original error
     }

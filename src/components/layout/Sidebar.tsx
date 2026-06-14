@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FileText, Activity, User, LogOut, Pill } from 'lucide-react'
+import { LayoutDashboard, FileText, Activity, User, LogOut, Pill, Users } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -11,6 +11,7 @@ const navItems = [
   { href: '/reports', label: 'My Reports', icon: FileText },
   { href: '/prescription', label: 'Prescription Scanner', icon: Pill },
   { href: '/health-overview', label: 'Health Overview', icon: Activity },
+  { href: '/family', label: 'Family', icon: Users },
   { href: '/profile', label: 'Profile', icon: User },
 ]
 

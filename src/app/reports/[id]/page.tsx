@@ -118,10 +118,11 @@ export default async function ReportDetailPage({ params }: { params: { id: strin
     .from('reports')
     .select('*')
     .eq('id', params.id)
-    .eq('user_id', user.id)
     .single()
 
   if (!report) notFound()
+
+  const ownerId = report.user_id
 
   const { data: values } = await supabase
     .from('report_values')
@@ -132,19 +133,19 @@ export default async function ReportDetailPage({ params }: { params: { id: strin
   const { data: profile } = await supabase
     .from('profiles')
     .select('full_name, date_of_birth, weight_kg, height_cm')
-    .eq('id', user.id)
+    .eq('id', ownerId)
     .single()
 
   const { data: conditions } = await supabase
     .from('user_conditions')
     .select('condition_name')
-    .eq('user_id', user.id)
+    .eq('user_id', ownerId)
 
   // All previous reports for history
   const { data: allReports } = await supabase
     .from('reports')
     .select('id, report_name, created_at, test_date, abnormal_count, overall_status')
-    .eq('user_id', user.id)
+    .eq('user_id', ownerId)
     .neq('id', params.id)
     .order('created_at', { ascending: false })
 
@@ -152,7 +153,7 @@ export default async function ReportDetailPage({ params }: { params: { id: strin
   const { data: allValues } = await supabase
     .from('report_values')
     .select('parameter_name, value, unit, test_date, report_id')
-    .eq('user_id', user.id)
+    .eq('user_id', ownerId)
     .neq('report_id', params.id)
     .order('test_date', { ascending: true })
 

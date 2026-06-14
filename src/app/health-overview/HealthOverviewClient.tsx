@@ -88,7 +88,7 @@ export default function HealthOverviewClient({
         <p className="text-xs font-bold uppercase tracking-widest text-accent mb-1">Longitudinal Tracking</p>
         <h2 className="font-playfair text-xl font-bold text-primary mb-6">How your values are changing over time</h2>
         {trendableParams.length > 0 ? (
-          <HealthCharts trendableParams={trendableParams} />
+          <HealthCharts parameterTrends={parameterTrends} />
         ) : (
           <div className="card text-center py-10 text-muted">
             <p className="text-sm">No trend data for the selected range.</p>

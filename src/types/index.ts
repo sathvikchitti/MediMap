@@ -15,6 +15,25 @@ export interface Profile {
   updated_at: string
 }
 
+export interface Family {
+  id: string
+  name: string
+  code: string
+  head_id: string
+  created_at: string
+}
+
+export interface FamilyMember {
+  id: string
+  family_id: string
+  user_id: string
+  status: 'pending' | 'accepted' | 'rejected'
+  role: 'head' | 'member'
+  created_at: string
+  updated_at: string
+  profile?: Profile
+}
+
 export interface UserCondition {
   id: string
   user_id: string
