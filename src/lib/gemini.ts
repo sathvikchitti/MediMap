@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/genai'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { ReportExtractionResult } from '@/types'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
